@@ -115,7 +115,7 @@ std::string dump_method(void *klass) {
         outPut << il2cpp_class_get_name(return_class) << " " << il2cpp_method_get_name(method)
                << "(";
         auto param_count = il2cpp_method_get_param_count(method);
-        for (int i = 0; i < param_count; ++i) {
+        for (uint32_t i = 0; i < param_count; ++i) {
             auto param = il2cpp_method_get_param(method, i);
 
             uint16_t attrs = *(uint16_t*)((uint8_t*)param + 8);
@@ -299,7 +299,7 @@ std::string dump_type(void *type) {
     }
     if (!extends.empty()) {
         outPut << " : " << extends[0];
-        for (int i = 1; i < extends.size(); ++i) {
+        for (size_t i = 1; i < extends.size(); ++i) {
             outPut << ", " << extends[i];
         }
     }
@@ -342,19 +342,19 @@ void il2cpp_dump() {
     auto domain = il2cpp_domain_get();
     auto assemblies = il2cpp_domain_get_assemblies(domain, &size);
     std::stringstream imageOutput;
-    for (int i = 0; i < size; ++i) {
+    for (size_t i = 0; i < size; ++i) {
         auto image = il2cpp_assembly_get_image(assemblies[i]);
         imageOutput << "// Image " << i << ": " << il2cpp_image_get_name(image) << "\n";
     }
     std::vector<std::string> outPuts;
     if (il2cpp_image_get_class) {
         LOGI("Version greater than 2018.3");
-        for (int i = 0; i < size; ++i) {
+        for (size_t i = 0; i < size; ++i) {
             auto image = il2cpp_assembly_get_image(assemblies[i]);
             std::stringstream imageStr;
             imageStr << "\n// Dll : " << il2cpp_image_get_name(image);
             auto classCount = il2cpp_image_get_class_count(image);
-            for (int j = 0; j < classCount; ++j) {
+            for (size_t j = 0; j < classCount; ++j) {
                 auto klass = il2cpp_image_get_class(image, j);
                 auto type = il2cpp_class_get_type(const_cast<void*>(klass));
                 auto outPut = imageStr.str() + dump_type(type);
@@ -386,7 +386,7 @@ void il2cpp_dump() {
         typedef void *(*Assembly_GetTypes_ftn)(void *, void *);
         auto assemblyLoad_fn = (Assembly_Load_ftn)loadPtr;
         auto assemblyGetTypes_fn = (Assembly_GetTypes_ftn)getTypesPtr;
-        for (int i = 0; i < size; ++i) {
+        for (size_t i = 0; i < size; ++i) {
             auto image = il2cpp_assembly_get_image(assemblies[i]);
             std::stringstream imageStr;
             auto image_name = il2cpp_image_get_name(image);
@@ -400,7 +400,7 @@ void il2cpp_dump() {
 
             auto max_length = *(size_t*)((uint8_t*)reflectionTypes + 24);
             auto items = (void**)((uint8_t*)reflectionTypes + 32);
-            for (int j = 0; j < max_length; ++j) {
+            for (size_t j = 0; j < max_length; ++j) {
                 auto klass = il2cpp_class_from_system_type(items[j]);
                 auto type = il2cpp_class_get_type(klass);
                 auto outPut = imageStr.str() + dump_type(type);
@@ -413,7 +413,7 @@ void il2cpp_dump() {
     std::ofstream outStream(outPath);
     outStream << imageOutput.str();
     auto count = outPuts.size();
-    for (int i = 0; i < count; ++i) {
+    for (size_t i = 0; i < count; ++i) {
         outStream << outPuts[i];
     }
     outStream.close();

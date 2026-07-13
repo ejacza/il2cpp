@@ -43,7 +43,7 @@ public:
 				auto parent = il2cpp_class_get_parent(klass);
 				auto pname = parent ? il2cpp_class_get_name(parent) : "";
 				if (strClass == cname && (strNamespace == "*" || ns == strNamespace) && (strParent == "*" || pname == strParent)) {
-					auto result = new Class{ .address = klass, .name = cname, .namespaze = ns, .parent = pname };
+					auto result = new Class{ .address = klass, .name = cname, .parent = pname, .namespaze = ns };
 					return result;
 				}
 			}
@@ -1365,7 +1365,7 @@ public:
 
 			[[nodiscard]] auto Equals(const std::wstring& newString) const -> bool {
 
-				if (newString.size() != m_stringLength) return false;
+				if (newString.size() != static_cast<size_t>(m_stringLength)) return false;
 				if (std::memcmp(newString.data(), m_firstChar, m_stringLength) != 0) return false;
 				return true;
 			}
@@ -1432,7 +1432,7 @@ public:
 			auto ToVector() -> std::vector<T> {
 				std::vector<T> rs{};
 				rs.reserve(this->max_length);
-				for (auto i = 0; i < this->max_length; i++) rs.push_back(this->At(i));
+				for (std::uintptr_t i = 0; i < this->max_length; i++) rs.push_back(this->At(i));
 				return rs;
 			}
 
