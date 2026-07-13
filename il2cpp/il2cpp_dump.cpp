@@ -90,9 +90,15 @@ bool _il2cpp_type_is_byref(void *type) {
 
 std::string dump_method(void *klass) {
     std::stringstream outPut;
-    outPut << "\n\t// Methods\n";
     void *iter = nullptr;
+    bool first = true;
     while (auto method = il2cpp_class_get_methods(klass, &iter)) {
+        if (first) {
+            outPut << "\n\t// Methods\n";
+            first = false;
+        } else {
+            outPut << "\n";
+        }
 
         void *methodPointer = *(void**)method;
         if (methodPointer) {
@@ -150,13 +156,17 @@ std::string dump_method(void *klass) {
 
 std::string dump_property(void *klass) {
     std::stringstream outPut;
-    outPut << "\n\t// Properties\n";
     void *iter = nullptr;
+    bool first = true;
     while (auto prop_const = il2cpp_class_get_properties(klass, &iter)) {
         auto prop = const_cast<void*>(prop_const);
         auto getter = il2cpp_property_get_get_method(prop);
         auto setter = il2cpp_property_get_set_method(prop);
         auto prop_name = il2cpp_property_get_name(prop);
+        if (first) {
+            outPut << "\n\t// Properties\n";
+            first = false;
+        }
         outPut << "\t";
         void *prop_class = nullptr;
         uint32_t iflags = 0;
@@ -188,10 +198,14 @@ std::string dump_property(void *klass) {
 
 std::string dump_field(void *klass) {
     std::stringstream outPut;
-    outPut << "\n\t// Fields\n";
     auto is_enum = il2cpp_class_is_enum(klass);
     void *iter = nullptr;
+    bool first = true;
     while (auto field = il2cpp_class_get_fields(klass, &iter)) {
+        if (first) {
+            outPut << "\n\t// Fields\n";
+            first = false;
+        }
         outPut << "\t";
         auto attrs = il2cpp_field_get_flags(field);
         auto access = attrs & FIELD_ATTRIBUTE_FIELD_ACCESS_MASK;
@@ -303,10 +317,16 @@ std::string dump_type(void *type) {
             outPut << ", " << extends[i];
         }
     }
+    auto fieldStr = dump_field(klass);
+    auto propStr = dump_property(klass);
+    auto methodStr = dump_method(klass);
+    if (fieldStr.empty() && propStr.empty() && methodStr.empty()) {
+        return "";
+    }
     outPut << "\n{";
-    outPut << dump_field(klass);
-    outPut << dump_property(klass);
-    outPut << dump_method(klass);
+    outPut << fieldStr;
+    outPut << propStr;
+    outPut << methodStr;
     outPut << "}\n";
     return outPut.str();
 }
