@@ -1,4 +1,3 @@
-# xdl - Extended Dynamic Linking - Static Library
 add_library(xdl STATIC
     xdl.c
     xdl_iterate.c
@@ -12,5 +11,6 @@ target_include_directories(xdl PUBLIC
 )
 
 target_compile_options(xdl PRIVATE
-    -Wall -Wextra -fvisibility=hidden
+    -O3 -DNDEBUG -fvisibility=hidden -flto
+    -ffunction-sections -fdata-sections
 )
