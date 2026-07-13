@@ -1,0 +1,5 @@
+build/
+.cxx/
+*.so
+*.o
+.idea/
