@@ -37,8 +37,90 @@ Output: `libDemo.so`
 
 ## Usage
 
-- Inject `libDemo.so` into a Unity IL2CPP Android app
-- `dump.cs` will be written to the app's persistent data path
+Inject `libDemo.so` into a Unity IL2CPP Android app — `dump.cs` will be written to the app's persistent data path.
+
+## UnityResolve.hpp
+
+A high-level C++ wrapper for runtime Unity object manipulation via the IL2CPP API.
+
+### Examples
+
+**Get an assembly and a class:**
+```cpp
+auto assembly = UnityResolve::Get("Assembly-CSharp.dll");
+auto klass = assembly->Get("Player", "GameLogic");
+```
+
+**Read/write a field on an object:**
+```cpp
+auto healthField = klass->Get<Field>("health");
+int hp = reinterpret_cast<int>(obj + healthField->offset);
+
+// or using helper
+int hp = klass->GetValue<int>(obj, "health");
+klass->SetValue(obj, "health", 100);
+```
+
+**Invoke a method directly (native call):**
+```cpp
+auto method = klass->Get<Method>("TakeDamage");
+method->Invoke<void, int>(obj, 10);
+```
+
+**Invoke via runtime (with boxing/unboxing):**
+```cpp
+auto method = klass->Get<Method>("GetName");
+auto result = method->RuntimeInvoke<String*>(obj);
+```
+
+**Cast a method to a C++ function pointer:**
+```cpp
+using FP = void(*)(void*, int);
+auto fp = method->Cast<void, void*, int>();
+fp(obj, 10);
+```
+
+**Find Unity objects:**
+```cpp
+auto playerObj = UnityType::GameObject::Find("Player");
+auto transform = playerObj->GetTransform();
+Vector3 pos = transform->GetPosition();
+```
+
+**Access main camera:**
+```cpp
+auto cam = UnityType::Camera::GetMain();
+float fov = cam->GetFoV();
+Vector3 screenPos = cam->WorldToScreenPoint(worldPos);
+```
+
+**Read/write static fields:**
+```cpp
+auto field = klass->Get<Field>("instance");
+auto instance = Player::StaticField<Player*>(field);
+```
+
+**Create managed String and Array:**
+```cpp
+auto str = UnityType::String::New("hello");
+auto arr = UnityType::Array<int>::New(someClass, 10);
+int val = arr->At(0);
+```
+
+**Iterate a managed List:**
+```cpp
+auto list = klass->GetValue<UnityType::List<Enemy*>*>(obj, "enemies");
+for (auto& enemy : list->fields->items->ToVector()) {
+    // use enemy
+}
+```
+
+**Time and Application:**
+```cpp
+float dt = UnityType::Time::GetDeltaTime();
+float time = UnityType::Time::GetTime();
+auto dataPath = UnityType::Application::get_persistentDataPath();
+```
 
 ## Dependencies
 
