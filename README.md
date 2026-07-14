@@ -53,6 +53,8 @@ auto klass = assembly->Get("Player", "GameLogic");
 
 **Read/write a field on an object:**
 ```cpp
+using Field = UnityResolve::Field;
+
 auto healthField = klass->Get<Field>("health");
 int hp = reinterpret_cast<int>(obj + healthField->offset);
 
@@ -63,6 +65,8 @@ klass->SetValue(obj, "health", 100);
 
 **Invoke a method directly (native call):**
 ```cpp
+using Method = UnityResolve::Method;
+
 auto method = klass->Get<Method>("TakeDamage");
 method->Invoke<void, int>(obj, 10);
 ```
@@ -70,7 +74,7 @@ method->Invoke<void, int>(obj, 10);
 **Invoke via runtime (with boxing/unboxing):**
 ```cpp
 auto method = klass->Get<Method>("GetName");
-auto result = method->RuntimeInvoke<String*>(obj);
+auto result = method->RuntimeInvoke<String*>(obj);  // String = UnityResolve::UnityType::String
 ```
 
 **Cast a method to a C++ function pointer:**
@@ -82,34 +86,36 @@ fp(obj, 10);
 
 **Find Unity objects:**
 ```cpp
-auto playerObj = UnityType::GameObject::Find("Player");
+using UT = UnityResolve::UnityType;
+
+auto playerObj = UT::GameObject::Find("Player");
 auto transform = playerObj->GetTransform();
-Vector3 pos = transform->GetPosition();
+UT::Vector3 pos = transform->GetPosition();
 ```
 
 **Access main camera:**
 ```cpp
-auto cam = UnityType::Camera::GetMain();
+auto cam = UT::Camera::GetMain();
 float fov = cam->GetFoV();
-Vector3 screenPos = cam->WorldToScreenPoint(worldPos);
+UT::Vector3 screenPos = cam->WorldToScreenPoint(worldPos);
 ```
 
 **Read/write static fields:**
 ```cpp
 auto field = klass->Get<Field>("instance");
-auto instance = Player::StaticField<Player*>(field);
+// use il2cpp_field_static_get_value / il2cpp_field_static_set_value directly
 ```
 
 **Create managed String and Array:**
 ```cpp
-auto str = UnityType::String::New("hello");
-auto arr = UnityType::Array<int>::New(someClass, 10);
+auto str = UT::String::New("hello");
+auto arr = UT::Array<int>::New(someClass, 10);
 int val = arr->At(0);
 ```
 
 **Iterate a managed List:**
 ```cpp
-auto list = klass->GetValue<UnityType::List<Enemy*>*>(obj, "enemies");
+auto list = klass->GetValue<UT::List<Enemy*>*>(obj, "enemies");
 for (auto& enemy : list->fields->items->ToVector()) {
     // use enemy
 }
@@ -117,9 +123,9 @@ for (auto& enemy : list->fields->items->ToVector()) {
 
 **Time and Application:**
 ```cpp
-float dt = UnityType::Time::GetDeltaTime();
-float time = UnityType::Time::GetTime();
-auto dataPath = UnityType::Application::get_persistentDataPath();
+float dt = UT::Time::GetDeltaTime();
+float time = UT::Time::GetTime();
+auto dataPath = UT::Application::get_persistentDataPath();
 ```
 
 ## Dependencies

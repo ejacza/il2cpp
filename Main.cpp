@@ -12,13 +12,17 @@ JavaVM *g_vm = nullptr;
 
 // ── Compile-check: contoh pemakaian UnityResolve.hpp ──────────────
 // Dipanggil setelah il2cpp_api_init(), jadi API function pointers sudah siap.
-static void example_unityresolve() {
-    using namespace UnityResolve;
+// Catatan: UnityResolve adalah class, jadi gunakan fully-qualified name.
+using Assembly = UnityResolve::Assembly;
+using Field    = UnityResolve::Field;
+using Method   = UnityResolve::Method;
+using UT       = UnityResolve::UnityType;
 
+static void example_unityresolve() {
     LOGI("=== UnityResolve example ===");
 
     // 1. Cari assembly
-    auto assembly = Get("Assembly-CSharp.dll");
+    auto assembly = UnityResolve::Get("Assembly-CSharp.dll");
     if (!assembly) {
         LOGI("Assembly-CSharp.dll not found, skipping examples");
         return;
@@ -46,13 +50,13 @@ static void example_unityresolve() {
     }
 
     // 5. Managed String
-    auto str = UnityType::String::New("hello from il2cpp");
+    auto str = UT::String::New("hello from il2cpp");
     if (str) {
         LOGI("String created: %s", str->ToString().c_str());
     }
 
     // 6. GameObject / Transform
-    auto playerObj = UnityType::GameObject::Find("Player");
+    auto playerObj = UT::GameObject::Find("Player");
     if (playerObj) {
         LOGI("GameObject found: Player");
         auto transform = playerObj->GetTransform();
@@ -63,27 +67,27 @@ static void example_unityresolve() {
     }
 
     // 7. Camera
-    auto cam = UnityType::Camera::GetMain();
+    auto cam = UT::Camera::GetMain();
     if (cam) {
         auto fov = cam->GetFoV();
         LOGI("Main camera FoV: %.2f", fov);
     }
 
     // 8. Time
-    auto dt = UnityType::Time::GetDeltaTime();
-    auto ts = UnityType::Time::GetTimeScale();
+    auto dt = UT::Time::GetDeltaTime();
+    auto ts = UT::Time::GetTimeScale();
     LOGI("DeltaTime: %.4f  TimeScale: %.2f", dt, ts);
 
     // 9. Application
-    auto dataPath = UnityType::Application::get_persistentDataPath();
+    auto dataPath = UT::Application::get_persistentDataPath();
     if (dataPath) {
         LOGI("PersistentDataPath: %s", dataPath->ToString().c_str());
     }
 
     // 10. Array template
-    auto intClass = Get("mscorlib.dll")->Get("Int32", "System");
+    auto intClass = UnityResolve::Get("mscorlib.dll")->Get("Int32", "System");
     if (intClass) {
-        auto arr = UnityType::Array<int>::New(intClass, 5);
+        auto arr = UT::Array<int>::New(intClass, 5);
         if (arr) {
             arr->At(0) = 42;
             arr->At(1) = 99;
