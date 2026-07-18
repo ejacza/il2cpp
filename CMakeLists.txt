@@ -9,6 +9,13 @@ set(ANDROID_STL c++_static)
 find_library(ANDROID_LOG_LIB log)
 add_subdirectory(xdl)
 
+# --- Dobby (inline hook) as a static library linked into Demo ---
+set(DOBBY_DEBUG OFF CACHE BOOL "" FORCE)
+set(DOBBY_BUILD_EXAMPLE OFF CACHE BOOL "" FORCE)
+set(DOBBY_BUILD_TEST OFF CACHE BOOL "" FORCE)
+set(Plugin.Android.BionicLinkerUtil ON CACHE BOOL "" FORCE)
+add_subdirectory(Dobby)
+
 add_library(Demo SHARED
     Main.cpp
     il2cpp/il2cpp_dump.cpp
@@ -18,10 +25,12 @@ target_include_directories(Demo PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/il2cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/xdl/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/Dobby/include
 )
 
 target_link_libraries(Demo PRIVATE
     xdl
+    dobby_static
     ${ANDROID_LOG_LIB}
     dl
 )
