@@ -5,14 +5,19 @@
 #define cdecl(s) s
 #endif
 
-// Mach-O uses @PAGE/@PAGEOFF for adrp/add; ELF (Android/Linux) uses
-// the :pg_hi21:/:lo12: relocation specifiers instead.
+// Load the address of common_closure_bridge_handler into TMP_REG_0.
+// Mach-O uses adrp+add with @PAGE/@PAGEOFF. On ELF (Android/Linux) that
+// global has default visibility, so a direct PG_HI21/ADD_LO12 relocation
+// is rejected inside a PIC shared library ("recompile with -fPIC"); go
+// through the GOT instead (adrp :got: + ldr :got_lo12:).
 #if defined(__APPLE__)
-#define PAGE_OF(s) s@PAGE
-#define PAGEOFF_OF(s) s@PAGEOFF
+#define LOAD_HANDLER(reg, s)                                                    \
+  adrp reg, s@PAGE;                                                             \
+  add reg, reg, s@PAGEOFF
 #else
-#define PAGE_OF(s) s
-#define PAGEOFF_OF(s) :lo12:s
+#define LOAD_HANDLER(reg, s)                                                    \
+  adrp reg, :got:s;                                                            \
+  ldr reg, [reg, #:got_lo12:s]
 #endif
 
 #define TMP_REG_0 x17
@@ -60,8 +65,7 @@ str TMP_REG_0, [sp, #(1 * 8)]
 // call convention: x0 = register context, x1 = interceptor entry
 mov x0, sp
 ldr x1, [sp, #(2 * 8 + 2 * 8 + 30 * 8 + 8 * 16)]
-adrp TMP_REG_0, PAGE_OF(cdecl(common_closure_bridge_handler))
-add TMP_REG_0, TMP_REG_0, PAGEOFF_OF(cdecl(common_closure_bridge_handler))
+LOAD_HANDLER(TMP_REG_0, cdecl(common_closure_bridge_handler))
 blr TMP_REG_0
 
 // restore stack, saved original sp
