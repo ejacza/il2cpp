@@ -5,7 +5,7 @@
 #include "core/arch/x86/registers-x86.h"
 #include "core/assembler/assembler.h"
 
-#include "MemoryAllocator/CodeBuffer/code_buffer_x86.h"
+#include "MemoryAllocator/CodeMemBuffer.h"
 
 #define IsInt8(imm) (-128 <= imm && imm <= 127)
 

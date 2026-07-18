@@ -147,3 +147,7 @@ struct CodeMemBuffer : MemBuffer {
   }
 #endif
 };
+
+// The arm/x86 backends were not renamed when CodeBuffer became
+// CodeMemBuffer; keep the old name working for them.
+typedef CodeMemBuffer CodeBuffer;

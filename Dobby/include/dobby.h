@@ -13,6 +13,12 @@ typedef uintptr_t addr_t;
 typedef uint32_t addr32_t;
 typedef uint64_t addr64_t;
 
+#if defined(__arm__)
+typedef uint32_t arm_inst_t;
+typedef uint16_t thumb1_inst_t;
+typedef uint32_t thumb2_inst_t;
+#endif
+
 typedef void *asm_func_t;
 
 #if defined(__arm__)
