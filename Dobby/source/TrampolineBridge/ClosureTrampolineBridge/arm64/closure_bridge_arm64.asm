@@ -5,6 +5,16 @@
 #define cdecl(s) s
 #endif
 
+// Mach-O uses @PAGE/@PAGEOFF for adrp/add; ELF (Android/Linux) uses
+// the :pg_hi21:/:lo12: relocation specifiers instead.
+#if defined(__APPLE__)
+#define PAGE_OF(s) s@PAGE
+#define PAGEOFF_OF(s) s@PAGEOFF
+#else
+#define PAGE_OF(s) s
+#define PAGEOFF_OF(s) :lo12:s
+#endif
+
 #define TMP_REG_0 x17
 .align 4
 
@@ -50,8 +60,8 @@ str TMP_REG_0, [sp, #(1 * 8)]
 // call convention: x0 = register context, x1 = interceptor entry
 mov x0, sp
 ldr x1, [sp, #(2 * 8 + 2 * 8 + 30 * 8 + 8 * 16)]
-adrp TMP_REG_0, cdecl(common_closure_bridge_handler)@PAGE
-add TMP_REG_0, TMP_REG_0, cdecl(common_closure_bridge_handler)@PAGEOFF
+adrp TMP_REG_0, PAGE_OF(cdecl(common_closure_bridge_handler))
+add TMP_REG_0, TMP_REG_0, PAGEOFF_OF(cdecl(common_closure_bridge_handler))
 blr TMP_REG_0
 
 // restore stack, saved original sp
