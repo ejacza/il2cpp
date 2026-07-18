@@ -1359,14 +1359,14 @@ public:
 
 			auto Clear() -> void {
 
-				memset(m_firstChar, 0, m_stringLength);
+				memset(m_firstChar, 0, m_stringLength * sizeof(wchar_t));
 				m_stringLength = 0;
 			}
 
 			[[nodiscard]] auto Equals(const std::wstring& newString) const -> bool {
 
 				if (newString.size() != static_cast<size_t>(m_stringLength)) return false;
-				if (std::memcmp(newString.data(), m_firstChar, m_stringLength) != 0) return false;
+				if (std::memcmp(newString.data(), m_firstChar, m_stringLength * sizeof(wchar_t)) != 0) return false;
 				return true;
 			}
 
@@ -1406,7 +1406,7 @@ public:
 			auto RemoveAt(const unsigned int m_uIndex) -> void {
 				if (m_uIndex >= max_length) return;
 
-				if (max_length > (m_uIndex + 1)) for (auto u = m_uIndex; (max_length - m_uIndex) > u; ++u) operator[](u) = operator[](u + 1);
+				for (auto u = m_uIndex; u + 1 < max_length; ++u) operator[](u) = operator[](u + 1);
 
 				--max_length;
 			}
@@ -1417,14 +1417,14 @@ public:
 				const auto m_uTotal = m_uIndex + m_uCount;
 				if (m_uTotal >= max_length) return;
 
-				if (max_length > (m_uTotal + 1)) for (auto u = m_uIndex; (max_length - m_uTotal) >= u; ++u) operator[](u) = operator[](u + m_uCount);
+				for (auto u = m_uIndex; u + m_uCount < max_length; ++u) operator[](u) = operator[](u + m_uCount);
 
 				max_length -= m_uCount;
 			}
 
 			auto RemoveAll() -> void {
 				if (max_length > 0) {
-					memset(GetData(), 0, sizeof(Type) * max_length);
+					memset(reinterpret_cast<void*>(GetData()), 0, sizeof(T) * max_length);
 					max_length = 0;
 				}
 			}
@@ -1662,13 +1662,9 @@ public:
 			template <typename T>
 			auto GetComponents(Class* pClass) -> std::vector<T> {
 				static Method* method;
-				static void* obj;
 
-				if (!method || !obj) {
-					method = Get("UnityEngine.CoreModule.dll")->Get("Component")->Get<Method>("GetComponents", { "System.Type" });
-					obj = pClass->GetType();
-				}
-				if (method) return method->Invoke<Array<T>*>(this, obj)->ToVector();
+				if (!method) method = Get("UnityEngine.CoreModule.dll")->Get("Component")->Get<Method>("GetComponents", { "System.Type" });
+				if (method) return method->Invoke<Array<T>*>(this, pClass->GetType())->ToVector();
 				return {};
 			}
 
@@ -1683,13 +1679,9 @@ public:
 			template <typename T>
 			auto GetComponentsInParent(Class* pClass) -> std::vector<T> {
 				static Method* method;
-				static void* obj;
 
-				if (!method || !obj) {
-					method = Get("UnityEngine.CoreModule.dll")->Get("Component")->Get<Method>("GetComponentsInParent", { "System.Type" });
-					obj = pClass->GetType();
-				}
-				if (method) return method->Invoke<Array<T>*>(this, obj)->ToVector();
+				if (!method) method = Get("UnityEngine.CoreModule.dll")->Get("Component")->Get<Method>("GetComponentsInParent", { "System.Type" });
+				if (method) return method->Invoke<Array<T>*>(this, pClass->GetType())->ToVector();
 				return {};
 			}
 
@@ -1828,8 +1820,8 @@ public:
 				static Method* method;
 
 				if (!method) method = Get("UnityEngine.CoreModule.dll")->Get("Transform")->Get<Method>("get_position_Injected");
-				const Vector3 vec3{};
-				method->Invoke<void>(this, &vec3);
+				Vector3 vec3{};
+				if (method) method->Invoke<void>(this, &vec3);
 				return vec3;
 			}
 
@@ -1837,7 +1829,7 @@ public:
 				static Method* method;
 
 				if (!method) method = Get("UnityEngine.CoreModule.dll")->Get("Transform")->Get<Method>("set_position_Injected");
-				return method->Invoke<void>(this, &position);
+				if (method) return method->Invoke<void>(this, &position);
 			}
 
 			auto GetRight() -> Vector3 {
@@ -1934,8 +1926,8 @@ public:
 				static Method* method;
 
 				if (!method) method = Get("UnityEngine.CoreModule.dll")->Get("Transform")->Get<Method>("get_localScale_Injected");
-				const Vector3 vec3{};
-				method->Invoke<void>(this, &vec3);
+				Vector3 vec3{};
+				if (method) method->Invoke<void>(this, &vec3);
 				return vec3;
 			}
 
