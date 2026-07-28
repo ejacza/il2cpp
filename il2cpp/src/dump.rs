@@ -8,7 +8,11 @@ fn cstr<'a>(p: *const u8) -> &'a str {
     if p.is_null() {
         ""
     } else {
-        unsafe { CStr::from_ptr(p as *const i8).to_str().unwrap_or("") }
+        unsafe {
+            CStr::from_ptr(p as *const core::ffi::c_char)
+                .to_str()
+                .unwrap_or("")
+        }
     }
 }
 
