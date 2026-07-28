@@ -10,11 +10,6 @@ set(ANDROID_STL c++_static)
 find_library(ANDROID_LOG_LIB log)
 add_subdirectory(xdl)
 
-set(DOBBY_DEBUG OFF CACHE BOOL "" FORCE)
-set(DOBBY_BUILD_EXAMPLE OFF CACHE BOOL "" FORCE)
-set(DOBBY_BUILD_TEST OFF CACHE BOOL "" FORCE)
-set(Plugin.Android.BionicLinkerUtil ON CACHE BOOL "" FORCE)
-add_subdirectory(Dobby)
 
 set(RUST_TARGET_PREFIX aarch64-linux-android)
 if(${ANDROID_ABI} STREQUAL "armeabi-v7a")
@@ -35,7 +30,7 @@ add_dependencies(rust_il2cpp rust_build)
 
 add_library(Demo SHARED Main.cpp)
 target_include_directories(Demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/xdl/include)
-target_link_libraries(Demo PRIVATE xdl dobby_static ${ANDROID_LOG_LIB} dl rust_il2cpp)
+target_link_libraries(Demo PRIVATE xdl ${ANDROID_LOG_LIB} dl rust_il2cpp)
 
 target_compile_options(Demo PRIVATE -O3 -DNDEBUG -ffunction-sections -fdata-sections
     -fvisibility=hidden -fvisibility-inlines-hidden -flto -s)
