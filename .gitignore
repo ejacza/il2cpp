@@ -3,3 +3,5 @@ build/
 *.so
 *.o
 .idea/
+
+il2cpp/target/
