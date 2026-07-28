@@ -1,40 +1,76 @@
-name: Build Android NDK
+name: Build
 
 on:
   push:
-    branches: [main]
+    branches: ["**"]
   pull_request:
-    branches: [main]
+    branches: ["**"]
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
       matrix:
         abi: [arm64-v8a, armeabi-v7a]
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Set up NDK
-        uses: nttld/setup-ndk@v1
-        id: ndk
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
         with:
-          ndk-version: r26d
+          targets: aarch64-linux-android,armv7-linux-androideabi
 
-      - name: Build with CMake
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: il2cpp
+
+      - name: Set up Android NDK
         run: |
-          mkdir build && cd build
-          cmake .. \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_TOOLCHAIN_FILE=${{ steps.ndk.outputs.ndk-path }}/build/cmake/android.toolchain.cmake \
-            -DANDROID_ABI=${{ matrix.abi }} \
-            -DANDROID_PLATFORM=android-24 \
-            -DANDROID_STL=c++_static
-          make -j$(nproc)
+          SDK_ROOT="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          echo "Available NDKs:"
+          ls "$SDK_ROOT/ndk/" 2>/dev/null || echo "No NDK found"
 
-      - name: Upload artifact
+      - name: Set target
+        id: target
+        run: |
+          case ${{ matrix.abi }} in
+            arm64-v8a) echo "rust_target=aarch64-linux-android" >> $GITHUB_OUTPUT ;;
+            armeabi-v7a) echo "rust_target=armv7-linux-androideabi" >> $GITHUB_OUTPUT ;;
+          esac
+
+      - name: Configure linker
+        run: |
+          SDK_ROOT="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          NDK_PATH=$(ls -d "$SDK_ROOT/ndk/"* 2>/dev/null | head -1)
+          case ${{ matrix.abi }} in
+            arm64-v8a)
+              echo "CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER=$NDK_PATH/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang" >> $GITHUB_ENV
+              ;;
+            armeabi-v7a)
+              echo "CARGO_TARGET_ARMV7_LINUX_ANDROIDEABI_LINKER=$NDK_PATH/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi21-clang" >> $GITHUB_ENV
+              ;;
+          esac
+          echo "AR=$NDK_PATH/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar" >> $GITHUB_ENV
+
+      - name: Configure CMake
+        run: |
+          SDK_ROOT="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          NDK_PATH=$(ls -d "$SDK_ROOT/ndk/"* 2>/dev/null | head -1)
+          cmake -B build -S .             -DCMAKE_TOOLCHAIN_FILE="$NDK_PATH/build/cmake/android.toolchain.cmake"             -DANDROID_ABI=${{ matrix.abi }}             -DANDROID_PLATFORM=android-24             -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: |
+          SDK_ROOT="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          NDK_PATH=$(ls -d "$SDK_ROOT/ndk/"* 2>/dev/null | head -1)
+          export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="$NDK_PATH/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang"
+          export CARGO_TARGET_ARMV7_LINUX_ANDROIDEABI_LINKER="$NDK_PATH/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi21-clang"
+          cmake --build build --config Release
+
+      - name: Upload .so
         uses: actions/upload-artifact@v4
         with:
           name: libDemo-${{ matrix.abi }}
