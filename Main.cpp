@@ -3,6 +3,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include "xdl/include/xdl.h"
+#include <android/log.h>
 
 JavaVM *g_vm = nullptr;
 
